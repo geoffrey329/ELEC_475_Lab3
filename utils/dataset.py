@@ -47,6 +47,15 @@ class PetNoseDataset(Dataset):
         #   4. Store the results in self.samples as a list of (name, u, v) tuples
         # ======================================================================
         self.samples = []
+        with open(label_file, "r") as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                # Split on the first comma only: the (u, v) pair contains a comma too
+                name, coords = line.split(",", 1)
+                u, v = coords.strip().strip('"').strip("()").split(",")
+                self.samples.append((name.strip(), float(u), float(v)))
 
     def __len__(self) -> int:
         return len(self.samples)
@@ -66,7 +75,19 @@ class PetNoseDataset(Dataset):
         #   6. Return (image, label, orig_size) as float32 tensors,
         #      with label = [u, v] and orig_size = [w, h]
         # ======================================================================
-        pass
+        name, u, v = self.samples[idx]
+        img = Image.open(self.img_dir / name).convert("RGB")
+        w, h = img.size  # PIL returns (W, H)
+
+        img = img.resize((IMG_SIZE, IMG_SIZE), Image.BILINEAR)
+        # Width and height are stretched by different factors, so scale u and v separately
+        u = u * IMG_SIZE / w
+        v = v * IMG_SIZE / h
+
+        image = TF.normalize(TF.to_tensor(img), MEAN, STD)
+        label = torch.tensor([u, v], dtype=torch.float32)
+        orig_size = torch.tensor([w, h], dtype=torch.float32)
+        return image, label, orig_size
 
 
 def denormalize(img: torch.Tensor) -> torch.Tensor:
