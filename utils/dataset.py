@@ -51,8 +51,8 @@ class PetNoseDataset(Dataset):
             for line in f:
                 line = line.strip()
                 if not line:
-                    continue
-                # Split on the first comma only: the (u, v) pair contains a comma too
+                    continue # pass on empty line
+            # Split on the first comma only: the (u, v) pair contains a comma too
                 name, coords = line.split(",", 1)
                 u, v = coords.strip().strip('"').strip("()").split(",")
                 self.samples.append((name.strip(), float(u), float(v)))
@@ -76,7 +76,7 @@ class PetNoseDataset(Dataset):
         #      with label = [u, v] and orig_size = [w, h]
         # ======================================================================
         name, u, v = self.samples[idx]
-        img = Image.open(self.img_dir / name).convert("RGB")
+        img = Image.open(self.img_dir / name).convert("RGB") # 3 channels
         w, h = img.size  # PIL returns (W, H)
 
         img = img.resize((IMG_SIZE, IMG_SIZE), Image.BILINEAR)
