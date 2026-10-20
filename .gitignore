@@ -1,0 +1,14 @@
+# Dataset
+data/
+
+# Virtual environment
+.venv/
+
+# Large model checkpoints and archives (exceed GitHub's 100MB file limit)
+checkpoints/
+*.pth
+*.zip
+
+# Python
+__pycache__/
+*.pyc
