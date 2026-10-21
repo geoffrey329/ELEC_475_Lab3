@@ -77,13 +77,13 @@ class PetNoseDataset(Dataset):
         # ======================================================================
         name, u, v = self.samples[idx]
         img = Image.open(self.img_dir / name).convert("RGB") # 3 channels
-        w, h = img.size  # PIL returns (W, H)
+        w, h = img.size  # PIL returns (W, H) not otherwaya round
 
         img = img.resize((IMG_SIZE, IMG_SIZE), Image.BILINEAR)
         # Width and height are stretched by different factors, so scale u and v separately
         u = u * IMG_SIZE / w
         v = v * IMG_SIZE / h
-
+        
         image = TF.normalize(TF.to_tensor(img), MEAN, STD)
         label = torch.tensor([u, v], dtype=torch.float32)
         orig_size = torch.tensor([w, h], dtype=torch.float32)

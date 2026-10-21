@@ -46,7 +46,15 @@ class SnoutNet(nn.Module):
         #   6. self.fc2  : in_features=1024, out_features=1024
         #   7. self.fc3  : in_features=1024, out_features=2
         # ======================================================================
-        pass
+        self.conv1 = nn.Conv2d(3, 64, kernel_size=3, padding=1)
+        self.conv2 = nn.Conv2d(64, 128, kernel_size=3, padding=1)
+        self.conv3 = nn.Conv2d(128, 256, kernel_size=3, padding=1)
+        # Shared by all three blocks; ceil_mode=True gives 57 (not 56) after the first pool
+        self.pool = nn.MaxPool2d(kernel_size=4, stride=4, ceil_mode=True)
+
+        self.fc1 = nn.Linear(256 * 4 * 4, 1024)
+        self.fc2 = nn.Linear(1024, 1024)
+        self.fc3 = nn.Linear(1024, 2)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         # ======================================================================
@@ -57,7 +65,14 @@ class SnoutNet(nn.Module):
         # 3. Apply fc1 -> ReLU, fc2 -> ReLU, then fc3 (no activation)
         # 4. Return the (B, 2) normalized (u, v) prediction
         # ======================================================================
-        pass
+        x = self.pool(F.relu(self.conv1(x)))  # (B, 64, 57, 57)
+        x = self.pool(F.relu(self.conv2(x)))  # (B, 128, 15, 15)
+        x = self.pool(F.relu(self.conv3(x)))  # (B, 256, 4, 4)
+        x = torch.flatten(x, start_dim=1)     # (B, 4096)
+
+        x = F.relu(self.fc1(x))
+        x = F.relu(self.fc2(x))
+        return self.fc3(x)                    # (B, 2), no activation (regression)
 
 
 class SnoutNetAlexNet(nn.Module):
@@ -76,11 +91,12 @@ class SnoutNetAlexNet(nn.Module):
         #      otherwise alexnet(weights=None)
         #   2. Replace self.backbone.classifier[6] with nn.Linear(4096, 2)
         # ======================================================================
-        pass
+        self.backbone = alexnet(weights=AlexNet_Weights.DEFAULT if pretrained else None)
+        self.backbone.classifier[6] = nn.Linear(4096, 2)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         # TODO [PRE-LAB TASK 4]: Return self.backbone(x)
-        pass
+        return self.backbone(x)
 
 
 class SnoutNetVGG16(nn.Module):
@@ -99,11 +115,12 @@ class SnoutNetVGG16(nn.Module):
         #      otherwise vgg16(weights=None)
         #   2. Replace self.backbone.classifier[6] with nn.Linear(4096, 2)
         # ======================================================================
-        pass
+        self.backbone = vgg16(weights=VGG16_Weights.DEFAULT if pretrained else None)
+        self.backbone.classifier[6] = nn.Linear(4096, 2)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         # TODO [PRE-LAB TASK 4]: Return self.backbone(x)
-        pass
+        return self.backbone(x)
 
 
 if __name__ == "__main__":
@@ -117,4 +134,14 @@ if __name__ == "__main__":
     # TODO [PRE-LAB TASK 5]: Load the provided weights and reproduce a known
     # prediction (see the Pre-Lab document for the code and expected output)
     # ==========================================================================
-    pass
+    from torchinfo import summary
+
+    summary(SnoutNet(), input_size=(1, 3, 227, 227))
+
+    x = torch.randn(1, 3, 227, 227)
+    for model in [SnoutNet(), SnoutNetAlexNet(pretrained=False), SnoutNetVGG16(pretrained=False)]:
+        model.eval()
+        with torch.no_grad():
+            out = model(x)
+        n_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+        print(f"{type(model).__name__:<16} output {tuple(out.shape)}  params {n_params:,}")
