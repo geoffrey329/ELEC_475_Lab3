@@ -151,7 +151,7 @@ def best_worst_indices(errors: torch.Tensor, k: int = 4) -> Tuple[torch.Tensor, 
     # ======================================================================
     order = torch.argsort(errors)                # smallest error first
     best = order[:k]
-    worst = order[-k:].flip(0)                   # largest error first
+    worst = order[-k:].flip(0)                   
     return best, worst
 
 
