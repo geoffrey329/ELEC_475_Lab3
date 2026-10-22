@@ -49,7 +49,7 @@ class SnoutNet(nn.Module):
         self.conv1 = nn.Conv2d(3, 64, kernel_size=3, padding=1)
         self.conv2 = nn.Conv2d(64, 128, kernel_size=3, padding=1)
         self.conv3 = nn.Conv2d(128, 256, kernel_size=3, padding=1)
-        # Shared by all three blocks; ceil_mode=True gives 57 (not 56) after the first pool
+        
         self.pool = nn.MaxPool2d(kernel_size=4, stride=4, ceil_mode=True)
 
         self.fc1 = nn.Linear(256 * 4 * 4, 1024)
@@ -65,14 +65,27 @@ class SnoutNet(nn.Module):
         # 3. Apply fc1 -> ReLU, fc2 -> ReLU, then fc3 (no activation)
         # 4. Return the (B, 2) normalized (u, v) prediction
         # ======================================================================
-        x = self.pool(F.relu(self.conv1(x)))  # (B, 64, 57, 57)
-        x = self.pool(F.relu(self.conv2(x)))  # (B, 128, 15, 15)
-        x = self.pool(F.relu(self.conv3(x)))  # (B, 256, 4, 4)
-        x = torch.flatten(x, start_dim=1)     # (B, 4096)
+        x = self.conv1(x)
+        x = F.relu(x)
+        x = self.pool(x) 
 
-        x = F.relu(self.fc1(x))
-        x = F.relu(self.fc2(x))
-        return self.fc3(x)                    # (B, 2), no activation (regression)
+        x = self.conv2(x)
+        x = F.relu(x)
+        x = self.pool(x)
+
+        x = self.conv3(x)
+        x = F.relu(x)
+        x = self.pool(x)
+
+        x = torch.flatten(x, start_dim=1)     
+
+        x = self.fc1(x)
+        x = F.relu(x)
+
+        x = self.fc2(x)
+        x = F.relu(x)
+
+        return self.fc3(x)             
 
 
 class SnoutNetAlexNet(nn.Module):
