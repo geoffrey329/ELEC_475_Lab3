@@ -12,3 +12,7 @@ checkpoints/
 # Python
 __pycache__/
 *.pyc
+
+#Instructions
+ELEC475_Lab3_In-lab.pdf
+
