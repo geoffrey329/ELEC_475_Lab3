@@ -124,7 +124,10 @@ def ced_curve(errors: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
     #
     # Hint: use torch.sort
     # ======================================================================
-    pass
+    x, _ = torch.sort(errors)
+    n = errors.numel()
+    y = 100.0 * torch.arange(1, n + 1, dtype=torch.float32) / n
+    return x, y
 
 
 def best_worst_indices(errors: torch.Tensor, k: int = 4) -> Tuple[torch.Tensor, torch.Tensor]:
