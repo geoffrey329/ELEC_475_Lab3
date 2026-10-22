@@ -33,7 +33,7 @@ def euclidean_errors(pred: torch.Tensor, gt: torch.Tensor) -> torch.Tensor:
     #   1. For each image, compute the distance between the predicted (u, v)
     #      and the ground-truth (u, v)
     # ======================================================================
-    pass
+    return torch.sqrt(((pred - gt) ** 2).sum(dim=1))
 
 
 def error_stats(errors: torch.Tensor) -> Dict[str, float]:
@@ -54,7 +54,13 @@ def error_stats(errors: torch.Tensor) -> Dict[str, float]:
     #   1. Compute each statistic with errors.min(), .mean(), .median(), .max() and .std()
     #   2. Convert each result to a Python float with .item()
     # ======================================================================
-    pass
+    return {
+        "min": errors.min().item(),
+        "mean": errors.mean().item(),
+        "median": errors.median().item(),
+        "max": errors.max().item(),
+        "std": errors.std().item(),
+    }
 
 
 def baseline_predictions(orig_size: torch.Tensor, train_file: str, img_dir: str) -> torch.Tensor:
@@ -84,7 +90,20 @@ def baseline_predictions(orig_size: torch.Tensor, train_file: str, img_dir: str)
     #      each test image: (u_avg * W, v_avg * H), using that test image's (W, H)
     #      from orig_size. This is the baseline's prediction for that image
     # ======================================================================
-    pass
+    normalized = []
+    with open(train_file, "r") as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            # Split on the first comma only: the (u, v) pair contains a comma too
+            name, coords = line.split(",", 1)
+            u, v = coords.strip().strip('"').strip("()").split(",")
+            W, H = Image.open(os.path.join(img_dir, name.strip())).size
+            normalized.append((float(u) / W, float(v) / H))
+
+    avg = torch.tensor(normalized, dtype=torch.float32).mean(dim=0)     # (u_avg, v_avg)
+    return avg * orig_size.float()
 
 
 def ced_curve(errors: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
