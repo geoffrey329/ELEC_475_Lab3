@@ -158,3 +158,26 @@ if __name__ == "__main__":
             out = model(x)
         n_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
         print(f"{type(model).__name__:<16} output {tuple(out.shape)}  params {n_params:,}")
+
+    # Task 5, Step 1: Load the provided weights (strict=True fails on any name/shape mismatch)
+    checks = [(SnoutNet(), "snoutnet.pth"),
+              (SnoutNetAlexNet(pretrained=False), "alexnet.pth"),
+              (SnoutNetVGG16(pretrained=False), "vgg16.pth")]
+    for model, name in checks:
+        state = torch.load(f"checkpoints/{name}", map_location="cpu",
+                           weights_only=True)
+        model.load_state_dict(state, strict=True)
+        print(f"Loaded {name}")
+
+    # Task 5, Step 2: Reproduce a known prediction on test sample 0
+    # Expected: Ground truth tensor([311., 152.]), Prediction tensor([350.3443, 181.7347])
+    from utils.dataset import PetNoseDataset
+    model = checks[0][0]  # SnoutNet (the loop leaves VGG16 in model)
+    dataset = PetNoseDataset(split="test")
+    model.eval()
+    image, label, orig_size = dataset[0]
+    with torch.no_grad():
+        # Model output is normalized: (u/227, v/227)
+        pred = model(image.unsqueeze(0))[0]
+    print("Ground truth:", label / 227 * orig_size)
+    print("Prediction:  ", pred * orig_size)
