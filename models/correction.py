@@ -64,7 +64,7 @@ class CorrectionNet(nn.Module):
         x=self.pool(x)
 
         x=self.conv2(x)
-        x=self.bn1(x)
+        x=self.bn2(x)
         x=F.relu(x)
         x=self.pool(x)
 
@@ -84,7 +84,7 @@ class CorrectionNet(nn.Module):
         x=self.fc1(x)
         x=F.relu(x)
 
-        x = self.fc2 # reutrns (B,2)
+        x = self.fc2(x) # reutrns (B,2)
 
         return x
 
