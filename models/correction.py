@@ -59,24 +59,24 @@ class CorrectionNet(nn.Module):
         # 4. Return the (B, 2) normalized offsets
         # ======================================================================
         x=self.conv1(x)
-        x= self.bn1(x)
+        x=self.bn1(x)
         x=F.relu(x)
-        x=self.pool
+        x=self.pool(x)
 
         x=self.conv2(x)
-        x=self.bn2
+        x=self.bn1(x)
         x=F.relu(x)
-        x=self.pool
+        x=self.pool(x)
 
         x=self.conv3(x)
-        x=self.bn3
+        x=self.bn3(x)
         x=F.relu(x)
-        x=self.pool
+        x=self.pool(x)
 
         x=self.conv4(x)
-        x=self.bn4
+        x=self.bn4(x)
         x=F.relu(x)
-        x=self.pool
+        x=self.pool(x)
 
     #transition to fully connected layers.
         x=torch.flatten(x, start_dim=1)
@@ -85,7 +85,7 @@ class CorrectionNet(nn.Module):
         x=F.relu(x)
 
         x = self.fc2 # reutrns (B,2)
-        
+
         return x
 
 
