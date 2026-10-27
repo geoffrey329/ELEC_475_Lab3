@@ -34,7 +34,20 @@ class CorrectionNet(nn.Module):
         #   2. fc1: in_features = 128 * 4 * 4 (2,048), out_features = 256
         #   3. fc2: in_features = 256, out_features = 2
         # ======================================================================
-        pass
+        self.conv1 = nn.Conv2d(3, 32, kernel_size=3, padding=1)
+        self.conv2 = nn.Conv2d(32, 64 ,kernel_size=3, padding=1)
+        self.conv3 = nn.Conv2d(64, 128 ,kernel_size=3, padding=1)
+        self.conv4 = nn.Conv2d(128, 128 ,kernel_size=3, padding=1)
+
+        self.bn1 = nn.BatchNorm2d(32)
+        self.bn2 = nn.BatchNorm2d(64)
+        self.bn3 = nn.BatchNorm2d(128)
+        self.bn4 = nn.BatchNorm2d(128)
+
+        self.pool = nn.MaxPool2d(kernel_size=2,stride=2)
+
+        self.fc1 = nn.Linear(128*4*4,256)
+        self.fc2 = nn.Linear(256,2)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         # ======================================================================
@@ -45,7 +58,36 @@ class CorrectionNet(nn.Module):
         # 3. Apply fc1 -> ReLU, then fc2 (no activation)
         # 4. Return the (B, 2) normalized offsets
         # ======================================================================
-        pass
+        x=self.conv1(x)
+        x= self.bn1(x)
+        x=F.relu(x)
+        x=self.pool
+
+        x=self.conv2(x)
+        x=self.bn2
+        x=F.relu(x)
+        x=self.pool
+
+        x=self.conv3(x)
+        x=self.bn3
+        x=F.relu(x)
+        x=self.pool
+
+        x=self.conv4(x)
+        x=self.bn4
+        x=F.relu(x)
+        x=self.pool
+
+    #transition to fully connected layers.
+        x=torch.flatten(x, start_dim=1)
+
+        x=self.fc1(x)
+        x=F.relu(x)
+
+        x = self.fc2 # reutrns (B,2)
+        
+        return x
+
 
 
 class CorrectionNetModified(nn.Module):
