@@ -64,7 +64,7 @@ def correct_predictions(checkpoint_path: str, data_dir: str = "data/oxford-iiit-
             offsets = torch.cat([model(batch.to(device)).cpu() for batch in patches.split(64)])
         corrected = centres + offsets * HALF_PATCH
 
-        # 3. Inference Timing & Save (cost includes both stages)
+        # 3. Inference Timing & Save cost includes both stages. 
         ms = benchmark_inference(model, list(patches[:TIMING_IMAGES]), device)
         save_path = os.path.join(pred_dir, f"{key}_{tag}.pt")
         torch.save(dict(data, pred=corrected, params=data["params"] + corr_params,

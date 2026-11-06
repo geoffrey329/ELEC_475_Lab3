@@ -100,13 +100,42 @@ class CorrectionNetModified(nn.Module):
         # ======================================================================
         # TODO [POST-LAB STEP 5]: Implement Your Modified Correction Model
         # ======================================================================
-        pass
+        self.block1 = self._block(3, 32)  # (32, 32, 32)
+        self.block2 = self._block(32, 64)  # (64, 16, 16)
+        self.block3 = self._block(64, 128)  # (128, 8, 8)
+        self.block4 = self._block(128, 128)  # (128, 4, 4)
+
+        self.dropout = nn.Dropout(0.3)  # implement dropout to improve performance
+        self.fc1 = nn.Linear(2048, 256)  
+        self.fc2 = nn.Linear(256, 2)  #Same output depth as before. 
+
+    @staticmethod
+    def _block(in_ch, out_ch):
+        return nn.Sequential(  # two convs per block, then pool
+            nn.Conv2d(in_ch, out_ch, kernel_size=3, padding=1),  # first 3x3 conv
+            nn.BatchNorm2d(out_ch),  
+            nn.ReLU(inplace=True),  
+            nn.Conv2d(out_ch, out_ch, kernel_size=3, padding=1),  # extra 3x3 conv
+            nn.BatchNorm2d(out_ch),  
+            nn.ReLU(inplace=True),  
+            nn.MaxPool2d(kernel_size=2, stride=2),  # halve spatial size
+        )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         # ======================================================================
         # TODO [POST-LAB STEP 5]: Implement the Forward Pass
         # ======================================================================
-        pass
+        x = self.block1(x)  # (B, 32, 32, 32)
+        x = self.block2(x)  # (B, 64, 16, 16)
+        x = self.block3(x)  # (B, 128, 8, 8)
+        x = self.block4(x)  # (B, 128, 4, 4)
+
+        x = torch.flatten(x, start_dim=1)  # (B, 2048)
+        x = self.dropout(x)  # dropout before fc1
+        x = F.relu(self.fc1(x))  # (B, 256)
+        x = self.dropout(x)  # dropout before fc2
+        x = self.fc2(x)  # (B, 2), no activation
+        return x
 
 
 if __name__ == "__main__":
